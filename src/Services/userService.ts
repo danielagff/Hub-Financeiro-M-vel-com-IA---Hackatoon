@@ -36,7 +36,6 @@ export class UserService implements IUserService {
   }
 
   async createUser(data: CreateUserDto): Promise<UserResponseDto> {
-    // Validações
     if (!data.name || data.name.trim().length === 0) {
       throw new Error('Nome é obrigatório');
     }
@@ -53,19 +52,15 @@ export class UserService implements IUserService {
       throw new Error('Senha deve ter no mínimo 6 caracteres');
     }
 
-    // Verifica se email já existe
     const existingUserByEmail = await this.repository.findByEmail(data.email);
     if (existingUserByEmail) {
       throw new Error('Email já cadastrado');
     }
 
-    // Verifica se chave PIX já existe
     const existingUserByPix = await this.repository.findByChavePix(data.chavePix);
     if (existingUserByPix) {
       throw new Error('Chave PIX já cadastrada');
     }
-
-    // Validações de valores numéricos
     if (data.balance !== undefined && data.balance < 0) {
       throw new Error('Balance não pode ser negativo');
     }
@@ -82,18 +77,15 @@ export class UserService implements IUserService {
       throw new Error('ID inválido');
     }
 
-    // Verifica se usuário existe
     const existingUser = await this.repository.findById(id);
     if (!existingUser) {
       throw new Error('Usuário não encontrado');
     }
 
-    // Validações condicionais
     if (data.email) {
       if (!data.email.includes('@')) {
         throw new Error('Email inválido');
       }
-      // Verifica se email já está em uso por outro usuário
       const userWithEmail = await this.repository.findByEmail(data.email);
       if (userWithEmail && userWithEmail.id !== id) {
         throw new Error('Email já está em uso por outro usuário');
@@ -101,7 +93,6 @@ export class UserService implements IUserService {
     }
 
     if (data.chavePix) {
-      // Verifica se chave PIX já está em uso por outro usuário
       const userWithPix = await this.repository.findByChavePix(data.chavePix);
       if (userWithPix && userWithPix.id !== id) {
         throw new Error('Chave PIX já está em uso por outro usuário');
@@ -135,14 +126,5 @@ export class UserService implements IUserService {
 
     return await this.repository.delete(id);
   }
-
-  // Métodos para transações e despesas (comentado por enquanto)
-  // async addTransactionToUser(userId: number, transactionId: string): Promise<void> {
-  //   await this.repository.addTransaction(userId, transactionId);
-  // }
-
-  // async addExpenseToUser(userId: number, expenseId: string): Promise<void> {
-  //   await this.repository.addExpense(userId, expenseId);
-  // }
 }
 

@@ -2,10 +2,9 @@ import { IUserRepository } from './InterfacesRepository/userRepository';
 import { CreateUserDto, UpdateUserDto, UserResponseDto } from '../Models/dto/userDto';
 import { getPostgreSQLPool } from '../Utils/postgresql';
 import { hashPassword } from '../Security/bcrypt';
-import { UserModel } from '../Models/User/userModel'; // Para IAAgent no MongoDB
+import { UserModel } from '../Models/User/userModel';
 
 export class UserRepository implements IUserRepository {
-  // Converte resultado do PostgreSQL para UserResponseDto
   private toResponseDto(row: any, iaAgent?: any): UserResponseDto {
     return {
       id: row.id,
@@ -15,8 +14,6 @@ export class UserRepository implements IUserRepository {
       chavePix: row.chave_pix,
       balance: parseFloat(row.balance),
       creditScore: row.credit_score,
-      // transactions: [], // Comentado por enquanto
-      // expenses: [], // Comentado por enquanto
       configuration: row.configuration || {},
       iaAgent: iaAgent || { attributes: {} },
       createdAt: row.created_at,
@@ -24,7 +21,6 @@ export class UserRepository implements IUserRepository {
     };
   }
 
-  // Busca IAAgent no MongoDB se houver ia_agent_id
   private async getIAAgent(iaAgentId: string | null): Promise<any> {
     if (!iaAgentId) {
       return { attributes: {} };
@@ -39,7 +35,7 @@ export class UserRepository implements IUserRepository {
         };
       }
     } catch (error) {
-      console.warn('IAAgent não encontrado no MongoDB:', iaAgentId);
+      console.warn('IAAgent not found in MongoDB:', iaAgentId);
     }
 
     return { attributes: {} };
@@ -99,11 +95,7 @@ export class UserRepository implements IUserRepository {
 
   async create(data: CreateUserDto): Promise<UserResponseDto> {
     const pool = getPostgreSQLPool();
-    
-    // Criptografa a senha
     const hashedPassword = await hashPassword(data.password);
-
-    // Salva IAAgent no MongoDB se fornecido
     let iaAgentId: string | null = null;
     if (data.iaAgent && Object.keys(data.iaAgent.attributes || {}).length > 0) {
       const iaAgentDoc = new UserModel({
@@ -115,7 +107,6 @@ export class UserRepository implements IUserRepository {
       iaAgentId = saved._id.toString();
     }
 
-    // Insere no PostgreSQL
     const result = await pool.query(
       `INSERT INTO users (type, name, email, chave_pix, password, balance, credit_score, configuration, ia_agent_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -140,8 +131,6 @@ export class UserRepository implements IUserRepository {
 
   async update(id: number, data: UpdateUserDto): Promise<UserResponseDto | null> {
     const pool = getPostgreSQLPool();
-    
-    // Monta os campos para atualização
     const updates: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
@@ -187,19 +176,15 @@ export class UserRepository implements IUserRepository {
       values.push(JSON.stringify(data.configuration));
     }
 
-    // Atualiza IAAgent no MongoDB se fornecido
     if (data.iaAgent) {
-      // Busca o usuário atual para pegar o ia_agent_id
       const currentUser = await pool.query('SELECT ia_agent_id FROM users WHERE id = $1', [id]);
       
       if (currentUser.rows[0]?.ia_agent_id) {
-        // Atualiza o IAAgent existente
         await UserModel.findByIdAndUpdate(
           currentUser.rows[0].ia_agent_id,
           { iaAgent: { attributes: data.iaAgent.attributes } }
         );
       } else {
-        // Cria novo IAAgent
         const iaAgentDoc = new UserModel({
           iaAgent: {
             attributes: data.iaAgent.attributes,
@@ -212,7 +197,6 @@ export class UserRepository implements IUserRepository {
     }
 
     if (updates.length === 0) {
-      // Nada para atualizar, retorna o usuário atual
       return await this.findById(id);
     }
 
@@ -232,19 +216,14 @@ export class UserRepository implements IUserRepository {
 
   async delete(id: number): Promise<boolean> {
     const pool = getPostgreSQLPool();
-    
-    // Busca o ia_agent_id antes de deletar
     const user = await pool.query('SELECT ia_agent_id FROM users WHERE id = $1', [id]);
-    
-    // Deleta do PostgreSQL
     const result = await pool.query('DELETE FROM users WHERE id = $1', [id]);
     
-    // Deleta o IAAgent do MongoDB se existir
     if (user.rows[0]?.ia_agent_id) {
       try {
         await UserModel.findByIdAndDelete(user.rows[0].ia_agent_id);
       } catch (error) {
-        console.warn('Erro ao deletar IAAgent do MongoDB:', error);
+        console.warn('Error deleting IAAgent from MongoDB:', error);
       }
     }
     

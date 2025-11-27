@@ -8,8 +8,5 @@ export interface IUserRepository {
   create(data: CreateUserDto): Promise<UserResponseDto>;
   update(id: number, data: UpdateUserDto): Promise<UserResponseDto | null>;
   delete(id: number): Promise<boolean>;
-  // Métodos para transações e despesas (comentado por enquanto)
-  // addTransaction(userId: number, transactionId: string): Promise<void>;
-  // addExpense(userId: number, expenseId: string): Promise<void>;
 }
 

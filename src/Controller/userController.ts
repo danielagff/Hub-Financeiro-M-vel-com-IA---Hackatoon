@@ -5,7 +5,6 @@ import { CreateUserDto, UpdateUserDto } from '../Models/dto/userDto';
 export const userRouter = Router();
 const userService = new UserService();
 
-// GET /users - Lista todos os usuários
 userRouter.get('/', async (req: Request, res: Response) => {
   try {
     const users = await userService.getAllUsers();
@@ -15,7 +14,6 @@ userRouter.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// GET /users/:id - Busca usuário por ID
 userRouter.get('/:id', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
@@ -31,7 +29,6 @@ userRouter.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// GET /users/email/:email - Busca usuário por email
 userRouter.get('/email/:email', async (req: Request, res: Response) => {
   try {
     const email = req.params.email;
@@ -47,7 +44,6 @@ userRouter.get('/email/:email', async (req: Request, res: Response) => {
   }
 });
 
-// GET /users/pix/:chavePix - Busca usuário por Chave PIX
 userRouter.get('/pix/:chavePix', async (req: Request, res: Response) => {
   try {
     const chavePix = req.params.chavePix;
@@ -63,7 +59,6 @@ userRouter.get('/pix/:chavePix', async (req: Request, res: Response) => {
   }
 });
 
-// POST /users - Cria novo usuário
 userRouter.post('/', async (req: Request, res: Response) => {
   try {
     const userData: CreateUserDto = req.body;
@@ -74,7 +69,6 @@ userRouter.post('/', async (req: Request, res: Response) => {
   }
 });
 
-// PUT /users/:id - Atualiza usuário
 userRouter.put('/:id', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
@@ -91,7 +85,6 @@ userRouter.put('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// DELETE /users/:id - Deleta usuário
 userRouter.delete('/:id', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);

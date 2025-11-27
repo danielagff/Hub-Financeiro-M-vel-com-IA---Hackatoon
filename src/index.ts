@@ -35,12 +35,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Inicialização dos bancos de dados
 async function startServer() {
   try {
     await connectMongoDB();
     await connectPostgreSQL();
-    await initDatabase(); // Cria as tabelas se não existirem
+    await initDatabase();
     
     app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);

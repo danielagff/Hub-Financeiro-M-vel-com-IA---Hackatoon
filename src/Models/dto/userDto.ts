@@ -1,6 +1,5 @@
 import { UserType } from '../enums/userType';
 
-// DTO para criação de usuário
 export interface CreateUserDto {
   name: string;
   email: string;
@@ -15,7 +14,6 @@ export interface CreateUserDto {
   };
 }
 
-// DTO para atualização de usuário
 export interface UpdateUserDto {
   name?: string;
   email?: string;
@@ -49,7 +47,6 @@ export interface UserResponseDto {
   updatedAt: Date;
 }
 
-// DTO para login
 export interface LoginDto {
   email: string;
   password: string;

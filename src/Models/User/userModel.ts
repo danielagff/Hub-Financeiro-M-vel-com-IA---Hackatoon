@@ -1,32 +1,25 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { UserType } from '../enums/userType';
 
-// Interface para IAAgent (salvo no MongoDB)
 export interface IIAAgent {
   attributes: {
     [key: string]: any;
   };
 }
 
-// Interface para Configuration
 export interface IConfiguration {
   [key: string]: any;
 }
 
-// Interface principal do User
 export interface IUser extends Document {
   id: number;
   type: UserType | string;
   name: string;
   email: string;
   chavePix: string;
-  password: string; // Será criptografado com bcrypt
-  balance: number; // BigDecimal representado como number (pode usar Decimal128 se necessário)
-  creditScore: number; // int32
-  // []Transaction - One to many (comentado por enquanto)
-  // transactions: mongoose.Types.ObjectId[];
-  // []Expenses - One to many (comentado por enquanto)
-  // expenses: mongoose.Types.ObjectId[];
+  password: string;
+  balance: number;
+  creditScore: number;
   configuration: IConfiguration | Map<string, any>;
   iaAgent?: IIAAgent;
   createdAt: Date;
@@ -76,7 +69,7 @@ const UserSchema: Schema = new Schema(
     password: {
       type: String,
       required: true,
-      select: false, // Não retorna a senha por padrão nas queries
+      select: false,
     },
     balance: {
       type: Number,
@@ -91,16 +84,6 @@ const UserSchema: Schema = new Schema(
       min: 0,
       max: 1000,
     },
-    // Transactions - One to many (comentado por enquanto)
-    // transactions: [{
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: 'Transaction'
-    // }],
-    // Expenses - One to many (comentado por enquanto)
-    // expenses: [{
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: 'Expense'
-    // }],
     configuration: {
       type: Map,
       of: Schema.Types.Mixed,
@@ -118,7 +101,6 @@ const UserSchema: Schema = new Schema(
   }
 );
 
-// Índices para melhor performance
 UserSchema.index({ email: 1 });
 UserSchema.index({ chavePix: 1 });
 UserSchema.index({ id: 1 });

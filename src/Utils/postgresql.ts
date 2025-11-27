@@ -2,7 +2,6 @@ import { Pool, PoolClient } from 'pg';
 
 let pool: Pool;
 
-// Função para aguardar um tempo
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function connectPostgreSQL(): Promise<void> {
@@ -19,7 +18,6 @@ export async function connectPostgreSQL(): Promise<void> {
         database: process.env.POSTGRES_DB || 'hackatoon_fmu',
       });
 
-      // Testa a conexão
       const client = await pool.connect();
       await client.query('SELECT NOW()');
       client.release();

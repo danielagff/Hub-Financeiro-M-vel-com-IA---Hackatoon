@@ -3,8 +3,6 @@ import { getPostgreSQLPool } from './postgresql';
 export async function initDatabase(): Promise<void> {
   try {
     const pool = getPostgreSQLPool();
-    
-    // Cria a tabela users se não existir
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -22,7 +20,6 @@ export async function initDatabase(): Promise<void> {
       )
     `);
 
-    // Cria índices
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)
     `);
@@ -30,7 +27,6 @@ export async function initDatabase(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_users_chave_pix ON users(chave_pix)
     `);
 
-    // Cria função e trigger para updated_at
     await pool.query(`
       CREATE OR REPLACE FUNCTION update_updated_at_column()
       RETURNS TRIGGER AS $$

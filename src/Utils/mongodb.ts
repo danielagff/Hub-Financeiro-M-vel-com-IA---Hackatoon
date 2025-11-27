@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 
-// Função para aguardar um tempo
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export async function connectMongoDB(): Promise<void> {

@@ -6,7 +6,6 @@ import { authMiddleware, AuthRequest } from '../Security/authMiddleware';
 export const authRouter = Router();
 const authService = new AuthService();
 
-// POST /auth/login - Realiza login
 authRouter.post('/login', async (req: Request, res: Response) => {
   try {
     const credentials: LoginDto = req.body;
@@ -23,10 +22,8 @@ authRouter.post('/login', async (req: Request, res: Response) => {
   }
 });
 
-// POST /auth/logout - Realiza logout
 authRouter.post('/logout', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    // Extrai o token do header
     const authHeader = req.headers.authorization;
     const token = authHeader?.split(' ')[1] || '';
 
