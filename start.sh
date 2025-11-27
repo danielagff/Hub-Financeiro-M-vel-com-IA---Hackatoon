@@ -28,3 +28,5 @@ echo ""
 echo "Iniciando serviços (MongoDB, PostgreSQL e App)..."
 docker-compose up
 
+
+

@@ -11,7 +11,7 @@ export interface TokenPayload {
 export function generateToken(payload: TokenPayload): string {
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: JWT_EXPIRES_IN,
-  });
+  } as jwt.SignOptions);
 }
 
 export function verifyToken(token: string): TokenPayload {
@@ -21,4 +21,6 @@ export function verifyToken(token: string): TokenPayload {
     throw new Error('Token inválido');
   }
 }
+
+
 

@@ -197,3 +197,5 @@ Após executar com sucesso:
 3. ✅ PostgreSQL conectado
 4. 🚀 Pronto para desenvolver novas funcionalidades!
 
+
+
