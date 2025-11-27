@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # Aplicação Node.js
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: hackatoon-fmu-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongo:27017/hackatoon_fmu
+      - MONGODB_DB_NAME=hackatoon_fmu
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=hackatoon_fmu
+      - JWT_SECRET=your-secret-key-change-in-production
+      - JWT_EXPIRES_IN=24h
+    depends_on:
+      mongo:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - hackatoon-network
+    command: npm run dev
+
+  # MongoDB
+  mongo:
+    image: mongo:7.0
+    container_name: hackatoon-fmu-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=hackatoon_fmu
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - hackatoon-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  # PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: hackatoon-fmu-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=hackatoon_fmu
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - hackatoon-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  mongo-data:
+  postgres-data:
+
+networks:
+  hackatoon-network:
+    driver: bridge
+

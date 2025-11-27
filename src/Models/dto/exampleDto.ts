@@ -1,0 +1,20 @@
+// DTOs para validação e transferência de dados
+
+export interface CreateExampleDto {
+  name: string;
+  description?: string;
+}
+
+export interface UpdateExampleDto {
+  name?: string;
+  description?: string;
+}
+
+export interface ExampleResponseDto {
+  id: string;
+  name: string;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
