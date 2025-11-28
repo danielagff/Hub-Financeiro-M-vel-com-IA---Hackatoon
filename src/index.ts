@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { connectMongoDB } from './Utils/mongodb';
 import { connectPostgreSQL } from './Utils/postgresql';
 import { initDatabase } from './Utils/initDatabase';
+import { setupSwagger } from './Utils/swagger';
 import { pingRouter } from './Controller/pingController';
 import { userRouter } from './Controller/userController';
 import { authRouter } from './Controller/authController';
@@ -18,10 +19,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middlewares
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // Desabilitar CSP para Swagger UI
+}));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Swagger Documentation
+setupSwagger(app);
 
 // Routes
 app.use('/ping', pingRouter);

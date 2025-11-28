@@ -6,6 +6,33 @@ import { authMiddleware, AuthRequest } from '../Security/authMiddleware';
 export const authRouter = Router();
 const authService = new AuthService();
 
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Realizar login
+ *     tags: [Autenticação]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Login'
+ *     responses:
+ *       200:
+ *         description: Login realizado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LoginResponse'
+ *       401:
+ *         description: Credenciais inválidas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 authRouter.post('/login', async (req: Request, res: Response) => {
   try {
     const credentials: LoginDto = req.body;
@@ -22,6 +49,31 @@ authRouter.post('/login', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Realizar logout
+ *     tags: [Autenticação]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout realizado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       401:
+ *         description: Token inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 authRouter.post('/logout', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const authHeader = req.headers.authorization;

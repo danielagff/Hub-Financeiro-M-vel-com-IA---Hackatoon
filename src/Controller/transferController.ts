@@ -6,6 +6,40 @@ import { authMiddleware, AuthRequest } from '../Security/authMiddleware';
 export const transferRouter = Router();
 const transferService = new TransferService();
 
+/**
+ * @swagger
+ * /transfers/pix:
+ *   post:
+ *     summary: Realizar transferência PIX
+ *     tags: [Transferências]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/TransferPIX'
+ *     responses:
+ *       201:
+ *         description: Transferência realizada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TransferResponse'
+ *       400:
+ *         description: Erro na transferência (saldo insuficiente, chave inválida, etc)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Não autenticado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 transferRouter.post('/pix', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user?.userId) {

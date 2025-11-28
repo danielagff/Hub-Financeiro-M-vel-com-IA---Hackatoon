@@ -17,6 +17,28 @@ const userService = new UserService();
 //   }
 // });
 
+/**
+ * @swagger
+ * /users/me:
+ *   get:
+ *     summary: Buscar informações do próprio usuário
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Informações do usuário
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Não autenticado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 // Endpoint para buscar próprio usuário (sem ID na URL)
 userRouter.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
@@ -84,6 +106,33 @@ userRouter.get('/pix/:key', authMiddleware, async (req: AuthRequest, res: Respon
   }
 });
 
+/**
+ * @swagger
+ * /users:
+ *   post:
+ *     summary: Cadastrar novo usuário
+ *     tags: [Usuários]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateUser'
+ *     responses:
+ *       201:
+ *         description: Usuário criado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Erro na validação
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 userRouter.post('/', async (req: Request, res: Response) => {
   try {
     const userData: CreateUserDto = req.body;

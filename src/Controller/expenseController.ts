@@ -17,6 +17,30 @@ const expenseService = new ExpenseService();
 //   }
 // });
 
+/**
+ * @swagger
+ * /expenses/me:
+ *   get:
+ *     summary: Listar próprias despesas
+ *     tags: [Despesas]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de despesas do usuário
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Expense'
+ *       401:
+ *         description: Não autenticado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 // Listar próprias despesas
 expenseRouter.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
@@ -73,6 +97,34 @@ expenseRouter.get('/user/:userId/status/:status', authMiddleware, requireOwnersh
   }
 });
 
+/**
+ * @swagger
+ * /expenses:
+ *   post:
+ *     summary: Criar nova despesa
+ *     tags: [Despesas]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateExpense'
+ *     responses:
+ *       201:
+ *         description: Despesa criada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Expense'
+ *       400:
+ *         description: Erro na validação
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 expenseRouter.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user?.userId) {

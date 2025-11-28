@@ -17,6 +17,30 @@ const transactionService = new TransactionService();
 //   }
 // });
 
+/**
+ * @swagger
+ * /transactions/me:
+ *   get:
+ *     summary: Listar próprias transações
+ *     tags: [Transações]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de transações do usuário
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Transaction'
+ *       401:
+ *         description: Não autenticado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 // Listar próprias transações
 transactionRouter.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
@@ -62,6 +86,34 @@ transactionRouter.get('/user/:userId', authMiddleware, requireOwnership, async (
   }
 });
 
+/**
+ * @swagger
+ * /transactions:
+ *   post:
+ *     summary: Criar nova transação
+ *     tags: [Transações]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateTransaction'
+ *     responses:
+ *       201:
+ *         description: Transação criada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Transaction'
+ *       400:
+ *         description: Erro na validação
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 transactionRouter.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user?.userId) {
