@@ -28,11 +28,37 @@ export class UserService implements IUserService {
     return await this.repository.findByEmail(email);
   }
 
-  async getUserByChavePix(chavePix: string): Promise<UserResponseDto | null> {
-    if (!chavePix || chavePix.trim().length === 0) {
+  async getUserByPixKey(key: string): Promise<UserResponseDto | null> {
+    if (!key || key.trim().length === 0) {
       throw new Error('Chave PIX inválida');
     }
-    return await this.repository.findByChavePix(chavePix);
+    return await this.repository.findByPixKey(key);
+  }
+
+  async addPixKey(userId: number, pixKey: { type: string; key: string }): Promise<UserResponseDto> {
+    if (!userId || userId <= 0) throw new Error('UserId inválido');
+    if (!pixKey || !pixKey.key || pixKey.key.trim().length === 0) throw new Error('Chave inválida');
+
+    const user = await this.repository.findById(userId);
+    if (!user) throw new Error('Usuário não encontrado');
+
+    // check if key already exists globally
+    const existing = await this.repository.findByPixKey(pixKey.key);
+    if (existing) throw new Error('Chave PIX já cadastrada');
+
+    await this.repository.addPixKey(userId, pixKey);
+    // return updated user with pix keys
+    return (await this.repository.findById(userId)) as UserResponseDto;
+  }
+
+  async removePixKey(userId: number, key: string): Promise<boolean> {
+    if (!userId || userId <= 0) throw new Error('UserId inválido');
+    if (!key || key.trim().length === 0) throw new Error('Chave inválida');
+
+    const user = await this.repository.findById(userId);
+    if (!user) throw new Error('Usuário não encontrado');
+
+    return await this.repository.removePixKey(userId, key);
   }
 
   async createUser(data: CreateUserDto): Promise<UserResponseDto> {
@@ -44,8 +70,8 @@ export class UserService implements IUserService {
       throw new Error('Email inválido');
     }
 
-    if (!data.chavePix || data.chavePix.trim().length === 0) {
-      throw new Error('Chave PIX é obrigatória');
+    if (!data.pixKeys || data.pixKeys.length === 0) {
+      throw new Error('Ao menos uma chave PIX é obrigatória');
     }
 
     if (!data.password || data.password.length < 6) {
@@ -57,9 +83,12 @@ export class UserService implements IUserService {
       throw new Error('Email já cadastrado');
     }
 
-    const existingUserByPix = await this.repository.findByChavePix(data.chavePix);
-    if (existingUserByPix) {
-      throw new Error('Chave PIX já cadastrada');
+    // ensure none of the provided keys are already registered
+    for (const pk of data.pixKeys || []) {
+      const existing = await this.repository.findByPixKey(pk.key);
+      if (existing) {
+        throw new Error(`Chave PIX já cadastrada: ${pk.key}`);
+      }
     }
     if (data.balance !== undefined && data.balance < 0) {
       throw new Error('Balance não pode ser negativo');
@@ -92,10 +121,12 @@ export class UserService implements IUserService {
       }
     }
 
-    if (data.chavePix) {
-      const userWithPix = await this.repository.findByChavePix(data.chavePix);
-      if (userWithPix && userWithPix.id !== id) {
-        throw new Error('Chave PIX já está em uso por outro usuário');
+    if (data.pixKeys) {
+      for (const pk of data.pixKeys) {
+        const userWithPix = await this.repository.findByPixKey(pk.key);
+        if (userWithPix && userWithPix.id !== id) {
+          throw new Error(`Chave PIX já está em uso por outro usuário: ${pk.key}`);
+        }
       }
     }
 

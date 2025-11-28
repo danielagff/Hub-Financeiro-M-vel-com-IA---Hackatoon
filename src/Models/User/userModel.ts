@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { UserType } from '../enums/userType';
+import { PixKeyType } from '../enums/pixKeyType';
 
 export interface IIAAgent {
   attributes: {
@@ -16,7 +17,7 @@ export interface IUser extends Document {
   type: UserType | string;
   name: string;
   email: string;
-  chavePix: string;
+  pixKeys?: { type: PixKeyType | string; key: string }[];
   password: string;
   balance: number;
   creditScore: number;
@@ -61,10 +62,15 @@ const UserSchema: Schema = new Schema(
       lowercase: true,
       trim: true,
     },
-    chavePix: {
-      type: String,
-      required: true,
-      unique: true,
+    pixKeys: {
+      type: [
+        {
+          type: { type: String, enum: Object.values(PixKeyType) },
+          key: { type: String },
+        }
+      ],
+      required: false,
+      default: [],
     },
     password: {
       type: String,
@@ -102,7 +108,6 @@ const UserSchema: Schema = new Schema(
 );
 
 UserSchema.index({ email: 1 });
-UserSchema.index({ chavePix: 1 });
 UserSchema.index({ id: 1 });
 
 export const UserModel = mongoose.model<IUser>('User', UserSchema);

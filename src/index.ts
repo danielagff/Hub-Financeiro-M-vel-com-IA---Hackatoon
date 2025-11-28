@@ -8,6 +8,7 @@ import { initDatabase } from './Utils/initDatabase';
 import { pingRouter } from './Controller/pingController';
 import { userRouter } from './Controller/userController';
 import { authRouter } from './Controller/authController';
+import { transactionRouter } from './Controller/transactionController';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/ping', pingRouter);
 app.use('/users', userRouter);
 app.use('/auth', authRouter);
+app.use('/transactions', transactionRouter);
 
 // Health check
 app.get('/health', (req, res) => {

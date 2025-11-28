@@ -44,10 +44,10 @@ userRouter.get('/email/:email', async (req: Request, res: Response) => {
   }
 });
 
-userRouter.get('/pix/:chavePix', async (req: Request, res: Response) => {
+userRouter.get('/pix/:key', async (req: Request, res: Response) => {
   try {
-    const chavePix = req.params.chavePix;
-    const user = await userService.getUserByChavePix(chavePix);
+    const key = req.params.key;
+    const user = await userService.getUserByPixKey(key);
 
     if (!user) {
       return res.status(404).json({ message: 'Usuário não encontrado' });
@@ -66,6 +66,29 @@ userRouter.post('/', async (req: Request, res: Response) => {
     res.status(201).json(newUser);
   } catch (error: any) {
     res.status(400).json({ message: error.message || 'Erro ao criar usuário' });
+  }
+});
+
+userRouter.post('/:id/pix', async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const pix = req.body; // expect { type, key }
+    const updated = await userService.addPixKey(id, pix);
+    res.status(200).json(updated);
+  } catch (error: any) {
+    res.status(400).json({ message: error.message || 'Erro ao adicionar chave PIX' });
+  }
+});
+
+userRouter.delete('/:id/pix/:key', async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const key = req.params.key;
+    const removed = await userService.removePixKey(id, key);
+    if (!removed) return res.status(404).json({ message: 'Chave PIX não encontrada para esse usuário' });
+    res.status(200).json({ message: 'Chave PIX removida com sucesso' });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message || 'Erro ao remover chave PIX' });
   }
 });
 

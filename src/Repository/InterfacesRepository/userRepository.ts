@@ -4,7 +4,9 @@ export interface IUserRepository {
   findAll(): Promise<UserResponseDto[]>;
   findById(id: number): Promise<UserResponseDto | null>;
   findByEmail(email: string): Promise<UserResponseDto | null>;
-  findByChavePix(chavePix: string): Promise<UserResponseDto | null>;
+  findByPixKey(key: string): Promise<UserResponseDto | null>;
+  addPixKey(userId: number, pixKey: { type: string; key: string }): Promise<void>;
+  removePixKey(userId: number, key: string): Promise<boolean>;
   create(data: CreateUserDto): Promise<UserResponseDto>;
   update(id: number, data: UpdateUserDto): Promise<UserResponseDto | null>;
   delete(id: number): Promise<boolean>;

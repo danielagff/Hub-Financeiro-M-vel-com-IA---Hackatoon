@@ -1,9 +1,14 @@
 import { UserType } from '../enums/userType';
+import { PixKeyType } from '../enums/pixKeyType';
+
+export interface PixKeyDto {
+  type: PixKeyType | string;
+  key: string;
+}
 
 export interface CreateUserDto {
   name: string;
-  email: string;
-  chavePix: string;
+  email: string;  
   password: string;
   type?: UserType;
   balance?: number;
@@ -17,7 +22,7 @@ export interface CreateUserDto {
 export interface UpdateUserDto {
   name?: string;
   email?: string;
-  chavePix?: string;
+  pixKeys?: PixKeyDto[];
   password?: string;
   type?: UserType;
   balance?: number;
@@ -34,11 +39,9 @@ export interface UserResponseDto {
   type: UserType;
   name: string;
   email: string;
-  chavePix: string;
+  pixKeys: PixKeyDto[];
   balance: number;
   creditScore: number;
-  // transactions?: string[]; // Comentado por enquanto
-  // expenses?: string[]; // Comentado por enquanto
   configuration: { [key: string]: any };
   iaAgent: {
     attributes: { [key: string]: any };

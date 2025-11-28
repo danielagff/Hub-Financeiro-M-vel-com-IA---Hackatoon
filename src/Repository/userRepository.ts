@@ -11,7 +11,7 @@ export class UserRepository implements IUserRepository {
       type: row.type,
       name: row.name,
       email: row.email,
-      chavePix: row.chave_pix,
+      pixKeys: [],
       balance: parseFloat(row.balance),
       creditScore: row.credit_score,
       configuration: row.configuration || {},
@@ -19,6 +19,12 @@ export class UserRepository implements IUserRepository {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
+  }
+
+  private async getPixKeys(userId: number): Promise<{ type: string; key: string }[]> {
+    const pool = getPostgreSQLPool();
+    const result = await pool.query('SELECT type, key FROM user_pix_keys WHERE user_id = $1', [userId]);
+    return result.rows.map((r: any) => ({ type: r.type, key: r.key }));
   }
 
   private async getIAAgent(iaAgentId: string | null): Promise<any> {
@@ -48,7 +54,9 @@ export class UserRepository implements IUserRepository {
     const users: UserResponseDto[] = [];
     for (const row of result.rows) {
       const iaAgent = await this.getIAAgent(row.ia_agent_id);
-      users.push(this.toResponseDto(row, iaAgent));
+      const dto = this.toResponseDto(row, iaAgent);
+      dto.pixKeys = await this.getPixKeys(row.id);
+      users.push(dto);
     }
     
     return users;
@@ -64,7 +72,9 @@ export class UserRepository implements IUserRepository {
 
     const row = result.rows[0];
     const iaAgent = await this.getIAAgent(row.ia_agent_id);
-    return this.toResponseDto(row, iaAgent);
+    const dto = this.toResponseDto(row, iaAgent);
+    dto.pixKeys = await this.getPixKeys(row.id);
+    return dto;
   }
 
   async findByEmail(email: string): Promise<UserResponseDto | null> {
@@ -77,20 +87,38 @@ export class UserRepository implements IUserRepository {
 
     const row = result.rows[0];
     const iaAgent = await this.getIAAgent(row.ia_agent_id);
-    return this.toResponseDto(row, iaAgent);
+    const dto = this.toResponseDto(row, iaAgent);
+    dto.pixKeys = await this.getPixKeys(row.id);
+    return dto;
   }
 
-  async findByChavePix(chavePix: string): Promise<UserResponseDto | null> {
+  async findByPixKey(key: string): Promise<UserResponseDto | null> {
     const pool = getPostgreSQLPool();
-    const result = await pool.query('SELECT * FROM users WHERE chave_pix = $1', [chavePix]);
-    
+    const result = await pool.query(
+      'SELECT u.* FROM users u JOIN user_pix_keys k ON u.id = k.user_id WHERE k.key = $1',
+      [key]
+    );
+
     if (result.rows.length === 0) {
       return null;
     }
 
     const row = result.rows[0];
     const iaAgent = await this.getIAAgent(row.ia_agent_id);
-    return this.toResponseDto(row, iaAgent);
+    const dto = this.toResponseDto(row, iaAgent);
+    dto.pixKeys = await this.getPixKeys(row.id);
+    return dto;
+  }
+
+  async addPixKey(userId: number, pixKey: { type: string; key: string }): Promise<void> {
+    const pool = getPostgreSQLPool();
+    await pool.query('INSERT INTO user_pix_keys (user_id, type, key) VALUES ($1, $2, $3)', [userId, pixKey.type, pixKey.key]);
+  }
+
+  async removePixKey(userId: number, key: string): Promise<boolean> {
+    const pool = getPostgreSQLPool();
+    const result = await pool.query('DELETE FROM user_pix_keys WHERE user_id = $1 AND key = $2', [userId, key]);
+    return (result.rowCount || 0) > 0;
   }
 
   async create(data: CreateUserDto): Promise<UserResponseDto> {
@@ -108,14 +136,13 @@ export class UserRepository implements IUserRepository {
     }
 
     const result = await pool.query(
-      `INSERT INTO users (type, name, email, chave_pix, password, balance, credit_score, configuration, ia_agent_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO users (type, name, email, password, balance, credit_score, configuration, ia_agent_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
         data.type || 'NORMAL',
         data.name,
         data.email.toLowerCase(),
-        data.chavePix,
         hashedPassword,
         data.balance || 0,
         data.creditScore || 0,
@@ -126,7 +153,9 @@ export class UserRepository implements IUserRepository {
 
     const row = result.rows[0];
     const iaAgent = await this.getIAAgent(row.ia_agent_id);
-    return this.toResponseDto(row, iaAgent);
+    const dto = this.toResponseDto(row, iaAgent);
+    dto.pixKeys = await this.getPixKeys(row.id);
+    return dto;
   }
 
   async update(id: number, data: UpdateUserDto): Promise<UserResponseDto | null> {
@@ -145,10 +174,7 @@ export class UserRepository implements IUserRepository {
       values.push(data.email.toLowerCase());
     }
 
-    if (data.chavePix) {
-      updates.push(`chave_pix = $${paramIndex++}`);
-      values.push(data.chavePix);
-    }
+    const pixKeysToReplace = data.pixKeys;
 
     if (data.password) {
       const hashedPassword = await hashPassword(data.password);
@@ -193,6 +219,17 @@ export class UserRepository implements IUserRepository {
         const saved = await iaAgentDoc.save();
         updates.push(`ia_agent_id = $${paramIndex++}`);
         values.push(saved._id.toString());
+      }
+    }
+
+    if (pixKeysToReplace) {
+      await pool.query('DELETE FROM user_pix_keys WHERE user_id = $1', [id]);
+      for (const pk of pixKeysToReplace) {
+        try {
+          await pool.query('INSERT INTO user_pix_keys (user_id, type, key) VALUES ($1, $2, $3)', [id, pk.type, pk.key]);
+        } catch (err) {
+          console.warn('Failed to upsert pix key during update', pk, err);
+        }
       }
     }
 

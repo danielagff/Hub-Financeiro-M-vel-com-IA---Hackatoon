@@ -22,7 +22,7 @@ export async function connectPostgreSQL(): Promise<void> {
       await client.query('SELECT NOW()');
       client.release();
       
-      console.log('✅ PostgreSQL conectado com sucesso');
+      console.log('✅ PostgreSQL conectado com sucesso ao banco de dados');
       return;
     } catch (error: any) {
       if (attempt < maxRetries) {
