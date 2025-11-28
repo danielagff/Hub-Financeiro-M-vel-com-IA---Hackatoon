@@ -10,6 +10,7 @@ import { userRouter } from './Controller/userController';
 import { authRouter } from './Controller/authController';
 import { transactionRouter } from './Controller/transactionController';
 import { expenseRouter } from './Controller/expenseController';
+import { transferRouter } from './Controller/transferController';
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ app.use('/users', userRouter);
 app.use('/auth', authRouter);
 app.use('/transactions', transactionRouter);
 app.use('/expenses', expenseRouter);
+app.use('/transfers', transferRouter);
 
 // Health check
 app.get('/health', (req, res) => {

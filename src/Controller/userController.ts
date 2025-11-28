@@ -1,21 +1,40 @@
 import { Router, Request, Response } from 'express';
 import { UserService } from '../Services/userService';
 import { CreateUserDto, UpdateUserDto } from '../Models/dto/userDto';
-import { authMiddleware } from '../Security/authMiddleware';
+import { authMiddleware, AuthRequest } from '../Security/authMiddleware';
+import { requireOwnership } from '../Security/authorizationMiddleware';
 
 export const userRouter = Router();
 const userService = new UserService();
 
-userRouter.get('/', authMiddleware, async (req: Request, res: Response) => {
+// Listar todos os usuários - removido por segurança (ou pode ser restrito para ADMIN)
+// userRouter.get('/', authMiddleware, async (req: Request, res: Response) => {
+//   try {
+//     const users = await userService.getAllUsers();
+//     res.status(200).json(users);
+//   } catch (error: any) {
+//     res.status(500).json({ message: error.message || 'Erro ao buscar usuários' });
+//   }
+// });
+
+// Endpoint para buscar próprio usuário (sem ID na URL)
+userRouter.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const users = await userService.getAllUsers();
-    res.status(200).json(users);
+    if (!req.user?.userId) {
+      return res.status(401).json({ message: 'Usuário não autenticado' });
+    }
+    const id = parseInt(req.user.userId);
+    const user = await userService.getUserById(id);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+    res.status(200).json(user);
   } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Erro ao buscar usuários' });
+    res.status(400).json({ message: error.message || 'Erro ao buscar usuário' });
   }
 });
 
-userRouter.get('/:id', authMiddleware, async (req: Request, res: Response) => {
+userRouter.get('/:id', authMiddleware, requireOwnership, async (req: AuthRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const user = await userService.getUserById(id);
@@ -30,31 +49,36 @@ userRouter.get('/:id', authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
-userRouter.get('/email/:email', authMiddleware, async (req: Request, res: Response) => {
-  try {
-    const email = req.params.email;
-    const user = await userService.getUserByEmail(email);
+// Buscar por email - removido por segurança (ou pode ser restrito)
+// userRouter.get('/email/:email', authMiddleware, async (req: Request, res: Response) => {
+//   try {
+//     const email = req.params.email;
+//     const user = await userService.getUserByEmail(email);
+//     if (!user) {
+//       return res.status(404).json({ message: 'Usuário não encontrado' });
+//     }
+//     res.status(200).json(user);
+//   } catch (error: any) {
+//     res.status(400).json({ message: error.message || 'Erro ao buscar usuário' });
+//   }
+// });
 
-    if (!user) {
-      return res.status(404).json({ message: 'Usuário não encontrado' });
-    }
-
-    res.status(200).json(user);
-  } catch (error: any) {
-    res.status(400).json({ message: error.message || 'Erro ao buscar usuário' });
-  }
-});
-
-userRouter.get('/pix/:key', authMiddleware, async (req: Request, res: Response) => {
+// Buscar por chave PIX - retorna apenas informações básicas para transferências
+userRouter.get('/pix/:key', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const key = req.params.key;
     const user = await userService.getUserByPixKey(key);
 
     if (!user) {
-      return res.status(404).json({ message: 'Usuário não encontrado' });
+      return res.status(404).json({ message: 'Chave PIX não encontrada' });
     }
 
-    res.status(200).json(user);
+    // Retornar apenas informações básicas necessárias para transferência
+    res.status(200).json({
+      id: user.id,
+      name: user.name,
+      pixKeys: user.pixKeys.filter(pk => pk.key === key), // Apenas a chave pesquisada
+    });
   } catch (error: any) {
     res.status(400).json({ message: error.message || 'Erro ao buscar usuário' });
   }
@@ -70,7 +94,7 @@ userRouter.post('/', async (req: Request, res: Response) => {
   }
 });
 
-userRouter.post('/:id/pix', authMiddleware, async (req: Request, res: Response) => {
+userRouter.post('/:id/pix', authMiddleware, requireOwnership, async (req: AuthRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const pix = req.body; // expect { type, key }
@@ -81,7 +105,7 @@ userRouter.post('/:id/pix', authMiddleware, async (req: Request, res: Response) 
   }
 });
 
-userRouter.delete('/:id/pix/:key', authMiddleware, async (req: Request, res: Response) => {
+userRouter.delete('/:id/pix/:key', authMiddleware, requireOwnership, async (req: AuthRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const key = req.params.key;
@@ -93,7 +117,7 @@ userRouter.delete('/:id/pix/:key', authMiddleware, async (req: Request, res: Res
   }
 });
 
-userRouter.put('/:id', authMiddleware, async (req: Request, res: Response) => {
+userRouter.put('/:id', authMiddleware, requireOwnership, async (req: AuthRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const userData: UpdateUserDto = req.body;
@@ -109,7 +133,7 @@ userRouter.put('/:id', authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
-userRouter.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
+userRouter.delete('/:id', authMiddleware, requireOwnership, async (req: AuthRequest, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const deleted = await userService.deleteUser(id);

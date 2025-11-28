@@ -80,12 +80,6 @@ export class UserService implements IUserService {
     }
 
     // ensure none of the provided keys are already registered
-    for (const pk of data.pixKeys || []) {
-      const existing = await this.repository.findByPixKey(pk.key);
-      if (existing) {
-        throw new Error(`Chave PIX já cadastrada: ${pk.key}`);
-      }
-    }
     if (data.balance !== undefined && data.balance < 0) {
       throw new Error('Balance não pode ser negativo');
     }

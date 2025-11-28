@@ -251,6 +251,11 @@ export class UserRepository implements IUserRepository {
     return this.toResponseDto(row, iaAgent);
   }
 
+  async updateBalance(userId: number, newBalance: number): Promise<void> {
+    const pool = getPostgreSQLPool();
+    await pool.query('UPDATE users SET balance = $1 WHERE id = $2', [newBalance, userId]);
+  }
+
   async delete(id: number): Promise<boolean> {
     const pool = getPostgreSQLPool();
     const user = await pool.query('SELECT ia_agent_id FROM users WHERE id = $1', [id]);

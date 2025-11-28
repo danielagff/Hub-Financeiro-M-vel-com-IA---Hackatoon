@@ -9,6 +9,7 @@ export interface IUserRepository {
   removePixKey(userId: number, key: string): Promise<boolean>;
   create(data: CreateUserDto): Promise<UserResponseDto>;
   update(id: number, data: UpdateUserDto): Promise<UserResponseDto | null>;
+  updateBalance(userId: number, newBalance: number): Promise<void>;
   delete(id: number): Promise<boolean>;
 }
 

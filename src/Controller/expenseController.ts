@@ -1,32 +1,58 @@
 import { Router, Request, Response } from 'express';
 import { ExpenseService } from '../Services/expenseService';
 import { CreateExpenseDto, UpdateExpenseDto } from '../Models/dto/expenseDto';
-import { authMiddleware } from '../Security/authMiddleware';
+import { authMiddleware, AuthRequest } from '../Security/authMiddleware';
+import { requireOwnership } from '../Security/authorizationMiddleware';
 
 export const expenseRouter = Router();
 const expenseService = new ExpenseService();
 
-expenseRouter.get('/', authMiddleware, async (req: Request, res: Response) => {
+// Listar todas as despesas - removido por segurança (ou pode ser restrito para ADMIN)
+// expenseRouter.get('/', authMiddleware, async (req: Request, res: Response) => {
+//   try {
+//     const expenses = await expenseService.getAllExpenses();
+//     res.status(200).json(expenses);
+//   } catch (error: any) {
+//     res.status(500).json({ message: error.message || 'Erro ao buscar despesas' });
+//   }
+// });
+
+// Listar próprias despesas
+expenseRouter.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const expenses = await expenseService.getAllExpenses();
+    if (!req.user?.userId) {
+      return res.status(401).json({ message: 'Usuário não autenticado' });
+    }
+    const userId = parseInt(req.user.userId);
+    const expenses = await expenseService.getExpensesByUserId(userId);
     res.status(200).json(expenses);
   } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Erro ao buscar despesas' });
+    res.status(400).json({ message: error.message || 'Erro ao buscar despesas' });
   }
 });
 
-expenseRouter.get('/:id', authMiddleware, async (req: Request, res: Response) => {
+expenseRouter.get('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user?.userId) {
+      return res.status(401).json({ message: 'Usuário não autenticado' });
+    }
     const id = parseInt(req.params.id);
     const expense = await expenseService.getExpenseById(id);
     if (!expense) return res.status(404).json({ message: 'Despesa não encontrada' });
+    
+    // Verificar se a despesa pertence ao usuário autenticado
+    const authenticatedUserId = parseInt(req.user.userId);
+    if (expense.userId !== authenticatedUserId) {
+      return res.status(403).json({ message: 'Acesso negado. Você só pode acessar suas próprias despesas.' });
+    }
+    
     res.status(200).json(expense);
   } catch (error: any) {
     res.status(400).json({ message: error.message || 'Erro ao buscar despesa' });
   }
 });
 
-expenseRouter.get('/user/:userId', authMiddleware, async (req: Request, res: Response) => {
+expenseRouter.get('/user/:userId', authMiddleware, requireOwnership, async (req: AuthRequest, res: Response) => {
   try {
     const userId = parseInt(req.params.userId);
     const expenses = await expenseService.getExpensesByUserId(userId);
@@ -36,7 +62,7 @@ expenseRouter.get('/user/:userId', authMiddleware, async (req: Request, res: Res
   }
 });
 
-expenseRouter.get('/user/:userId/status/:status', authMiddleware, async (req: Request, res: Response) => {
+expenseRouter.get('/user/:userId/status/:status', authMiddleware, requireOwnership, async (req: AuthRequest, res: Response) => {
   try {
     const userId = parseInt(req.params.userId);
     const status = req.params.status.toUpperCase();
@@ -47,9 +73,15 @@ expenseRouter.get('/user/:userId/status/:status', authMiddleware, async (req: Re
   }
 });
 
-expenseRouter.post('/', authMiddleware, async (req: Request, res: Response) => {
+expenseRouter.post('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
-    const data: CreateExpenseDto = req.body;
+    if (!req.user?.userId) {
+      return res.status(401).json({ message: 'Usuário não autenticado' });
+    }
+    const data: CreateExpenseDto = {
+      ...req.body,
+      userId: parseInt(req.user.userId), // Sempre usar o userId do token
+    };
     const created = await expenseService.createExpense(data);
     res.status(201).json(created);
   } catch (error: any) {
@@ -57,9 +89,21 @@ expenseRouter.post('/', authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
-expenseRouter.put('/:id', authMiddleware, async (req: Request, res: Response) => {
+expenseRouter.put('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user?.userId) {
+      return res.status(401).json({ message: 'Usuário não autenticado' });
+    }
     const id = parseInt(req.params.id);
+    const expense = await expenseService.getExpenseById(id);
+    if (!expense) return res.status(404).json({ message: 'Despesa não encontrada' });
+    
+    // Verificar se a despesa pertence ao usuário autenticado
+    const authenticatedUserId = parseInt(req.user.userId);
+    if (expense.userId !== authenticatedUserId) {
+      return res.status(403).json({ message: 'Acesso negado. Você só pode atualizar suas próprias despesas.' });
+    }
+    
     const data: UpdateExpenseDto = req.body;
     const updated = await expenseService.updateExpense(id, data);
     if (!updated) return res.status(404).json({ message: 'Despesa não encontrada' });
@@ -69,9 +113,21 @@ expenseRouter.put('/:id', authMiddleware, async (req: Request, res: Response) =>
   }
 });
 
-expenseRouter.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
+expenseRouter.delete('/:id', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
+    if (!req.user?.userId) {
+      return res.status(401).json({ message: 'Usuário não autenticado' });
+    }
     const id = parseInt(req.params.id);
+    const expense = await expenseService.getExpenseById(id);
+    if (!expense) return res.status(404).json({ message: 'Despesa não encontrada' });
+    
+    // Verificar se a despesa pertence ao usuário autenticado
+    const authenticatedUserId = parseInt(req.user.userId);
+    if (expense.userId !== authenticatedUserId) {
+      return res.status(403).json({ message: 'Acesso negado. Você só pode deletar suas próprias despesas.' });
+    }
+    
     const deleted = await expenseService.deleteExpense(id);
     if (!deleted) return res.status(404).json({ message: 'Despesa não encontrada' });
     res.status(200).json({ message: 'Despesa deletada com sucesso' });

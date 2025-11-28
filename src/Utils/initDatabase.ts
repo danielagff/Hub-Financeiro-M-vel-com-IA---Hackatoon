@@ -3,6 +3,20 @@ import { getPostgreSQLPool } from './postgresql';
 export async function initDatabase(): Promise<void> {
   try {
     const pool = getPostgreSQLPool();
+    
+    // Migração: Remover coluna chave_pix se existir (estrutura antiga)
+    try {
+      await pool.query(`
+        ALTER TABLE users DROP COLUMN IF EXISTS chave_pix
+      `);
+      console.log('Migração: Coluna chave_pix removida (se existia)');
+    } catch (error: any) {
+      // Ignora erro se a coluna não existir
+      if (!error.message.includes('does not exist')) {
+        console.warn('Aviso ao tentar remover coluna chave_pix:', error.message);
+      }
+    }
+    
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -27,6 +41,18 @@ export async function initDatabase(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_users_id ON users(id)
     `);
     console.log('Índices da tabela users criados');
+
+    // Criar função para atualizar updated_at se não existir
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION update_updated_at_column()
+      RETURNS TRIGGER AS $$
+      BEGIN
+          NEW.updated_at = CURRENT_TIMESTAMP;
+          RETURN NEW;
+      END;
+      $$ language 'plpgsql'
+    `);
+    console.log('Função update_updated_at_column criada/atualizada');
 
     await pool.query(`
       DROP TRIGGER IF EXISTS update_users_updated_at ON users
