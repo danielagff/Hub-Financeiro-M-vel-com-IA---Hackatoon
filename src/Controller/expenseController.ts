@@ -1,11 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { ExpenseService } from '../Services/expenseService';
 import { CreateExpenseDto, UpdateExpenseDto } from '../Models/dto/expenseDto';
+import { authMiddleware } from '../Security/authMiddleware';
 
 export const expenseRouter = Router();
 const expenseService = new ExpenseService();
 
-expenseRouter.get('/', async (req: Request, res: Response) => {
+expenseRouter.get('/', authMiddleware, async (req: Request, res: Response) => {
   try {
     const expenses = await expenseService.getAllExpenses();
     res.status(200).json(expenses);
@@ -14,7 +15,7 @@ expenseRouter.get('/', async (req: Request, res: Response) => {
   }
 });
 
-expenseRouter.get('/:id', async (req: Request, res: Response) => {
+expenseRouter.get('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const expense = await expenseService.getExpenseById(id);
@@ -25,7 +26,7 @@ expenseRouter.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-expenseRouter.get('/user/:userId', async (req: Request, res: Response) => {
+expenseRouter.get('/user/:userId', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = parseInt(req.params.userId);
     const expenses = await expenseService.getExpensesByUserId(userId);
@@ -35,7 +36,7 @@ expenseRouter.get('/user/:userId', async (req: Request, res: Response) => {
   }
 });
 
-expenseRouter.get('/user/:userId/status/:status', async (req: Request, res: Response) => {
+expenseRouter.get('/user/:userId/status/:status', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = parseInt(req.params.userId);
     const status = req.params.status.toUpperCase();
@@ -46,7 +47,7 @@ expenseRouter.get('/user/:userId/status/:status', async (req: Request, res: Resp
   }
 });
 
-expenseRouter.post('/', async (req: Request, res: Response) => {
+expenseRouter.post('/', authMiddleware, async (req: Request, res: Response) => {
   try {
     const data: CreateExpenseDto = req.body;
     const created = await expenseService.createExpense(data);
@@ -56,7 +57,7 @@ expenseRouter.post('/', async (req: Request, res: Response) => {
   }
 });
 
-expenseRouter.put('/:id', async (req: Request, res: Response) => {
+expenseRouter.put('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const data: UpdateExpenseDto = req.body;
@@ -68,7 +69,7 @@ expenseRouter.put('/:id', async (req: Request, res: Response) => {
   }
 });
 
-expenseRouter.delete('/:id', async (req: Request, res: Response) => {
+expenseRouter.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const deleted = await expenseService.deleteExpense(id);

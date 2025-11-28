@@ -1,11 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { UserService } from '../Services/userService';
 import { CreateUserDto, UpdateUserDto } from '../Models/dto/userDto';
+import { authMiddleware } from '../Security/authMiddleware';
 
 export const userRouter = Router();
 const userService = new UserService();
 
-userRouter.get('/', async (req: Request, res: Response) => {
+userRouter.get('/', authMiddleware, async (req: Request, res: Response) => {
   try {
     const users = await userService.getAllUsers();
     res.status(200).json(users);
@@ -14,7 +15,7 @@ userRouter.get('/', async (req: Request, res: Response) => {
   }
 });
 
-userRouter.get('/:id', async (req: Request, res: Response) => {
+userRouter.get('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const user = await userService.getUserById(id);
@@ -29,7 +30,7 @@ userRouter.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-userRouter.get('/email/:email', async (req: Request, res: Response) => {
+userRouter.get('/email/:email', authMiddleware, async (req: Request, res: Response) => {
   try {
     const email = req.params.email;
     const user = await userService.getUserByEmail(email);
@@ -44,7 +45,7 @@ userRouter.get('/email/:email', async (req: Request, res: Response) => {
   }
 });
 
-userRouter.get('/pix/:key', async (req: Request, res: Response) => {
+userRouter.get('/pix/:key', authMiddleware, async (req: Request, res: Response) => {
   try {
     const key = req.params.key;
     const user = await userService.getUserByPixKey(key);
@@ -69,7 +70,7 @@ userRouter.post('/', async (req: Request, res: Response) => {
   }
 });
 
-userRouter.post('/:id/pix', async (req: Request, res: Response) => {
+userRouter.post('/:id/pix', authMiddleware, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const pix = req.body; // expect { type, key }
@@ -80,7 +81,7 @@ userRouter.post('/:id/pix', async (req: Request, res: Response) => {
   }
 });
 
-userRouter.delete('/:id/pix/:key', async (req: Request, res: Response) => {
+userRouter.delete('/:id/pix/:key', authMiddleware, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const key = req.params.key;
@@ -92,7 +93,7 @@ userRouter.delete('/:id/pix/:key', async (req: Request, res: Response) => {
   }
 });
 
-userRouter.put('/:id', async (req: Request, res: Response) => {
+userRouter.put('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const userData: UpdateUserDto = req.body;
@@ -108,7 +109,7 @@ userRouter.put('/:id', async (req: Request, res: Response) => {
   }
 });
 
-userRouter.delete('/:id', async (req: Request, res: Response) => {
+userRouter.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const deleted = await userService.deleteUser(id);

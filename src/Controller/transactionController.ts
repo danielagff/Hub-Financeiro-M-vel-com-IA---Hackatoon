@@ -1,11 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { TransactionService } from '../Services/transactionService';
 import { CreateTransactionDto, UpdateTransactionDto } from '../Models/dto/transactionDto';
+import { authMiddleware } from '../Security/authMiddleware';
 
 export const transactionRouter = Router();
 const transactionService = new TransactionService();
 
-transactionRouter.get('/', async (req: Request, res: Response) => {
+transactionRouter.get('/', authMiddleware, async (req: Request, res: Response) => {
   try {
     const txs = await transactionService.getAllTransactions();
     res.status(200).json(txs);
@@ -14,7 +15,7 @@ transactionRouter.get('/', async (req: Request, res: Response) => {
   }
 });
 
-transactionRouter.get('/:id', async (req: Request, res: Response) => {
+transactionRouter.get('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const tx = await transactionService.getTransactionById(id);
@@ -25,7 +26,7 @@ transactionRouter.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-transactionRouter.get('/user/:userId', async (req: Request, res: Response) => {
+transactionRouter.get('/user/:userId', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = parseInt(req.params.userId);
     const txs = await transactionService.getTransactionsByUserId(userId);
@@ -35,7 +36,7 @@ transactionRouter.get('/user/:userId', async (req: Request, res: Response) => {
   }
 });
 
-transactionRouter.post('/', async (req: Request, res: Response) => {
+transactionRouter.post('/', authMiddleware, async (req: Request, res: Response) => {
   try {
     const data: CreateTransactionDto = req.body;
     const created = await transactionService.createTransaction(data);
@@ -45,7 +46,7 @@ transactionRouter.post('/', async (req: Request, res: Response) => {
   }
 });
 
-transactionRouter.put('/:id', async (req: Request, res: Response) => {
+transactionRouter.put('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const data: UpdateTransactionDto = req.body;
@@ -57,7 +58,7 @@ transactionRouter.put('/:id', async (req: Request, res: Response) => {
   }
 });
 
-transactionRouter.delete('/:id', async (req: Request, res: Response) => {
+transactionRouter.delete('/:id', authMiddleware, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const deleted = await transactionService.deleteTransaction(id);

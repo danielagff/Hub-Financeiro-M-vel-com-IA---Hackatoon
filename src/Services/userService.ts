@@ -70,10 +70,6 @@ export class UserService implements IUserService {
       throw new Error('Email inválido');
     }
 
-    if (!data.pixKeys || data.pixKeys.length === 0) {
-      throw new Error('Ao menos uma chave PIX é obrigatória');
-    }
-
     if (!data.password || data.password.length < 6) {
       throw new Error('Senha deve ter no mínimo 6 caracteres');
     }
