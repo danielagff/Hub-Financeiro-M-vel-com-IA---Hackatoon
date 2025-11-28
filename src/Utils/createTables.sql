@@ -62,3 +62,24 @@ CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
 CREATE TRIGGER update_transactions_updated_at BEFORE UPDATE ON transactions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+
+-- Tabela de Despesas (Expenses)
+CREATE TABLE IF NOT EXISTS user_expenses (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    is_recurring_payment BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    amount DECIMAL(15,2) NOT NULL CHECK (amount >= 0),
+    description VARCHAR(255) NOT NULL,
+    execution_date TIMESTAMP NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING','FAILED','SUCCESS')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_expenses_user_id ON user_expenses(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_expenses_status ON user_expenses(status);
+CREATE INDEX IF NOT EXISTS idx_user_expenses_execution_date ON user_expenses(execution_date);
+
+CREATE TRIGGER update_user_expenses_updated_at BEFORE UPDATE ON user_expenses
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

@@ -84,6 +84,42 @@ export async function initDatabase(): Promise<void> {
         FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()
     `);
     console.log('Trigger update_transactions_updated_at criado');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_expenses (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        is_recurring_payment BOOLEAN NOT NULL DEFAULT FALSE,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        amount DECIMAL(15,2) NOT NULL CHECK (amount >= 0),
+        description VARCHAR(255) NOT NULL,
+        execution_date TIMESTAMP NOT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING','FAILED','SUCCESS')),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('Tabela user_expenses criada');
+
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_user_expenses_user_id ON user_expenses(user_id)
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_user_expenses_status ON user_expenses(status)
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_user_expenses_execution_date ON user_expenses(execution_date)
+    `);
+    console.log('Índices da tabela user_expenses criados');
+
+    await pool.query(`
+      DROP TRIGGER IF EXISTS update_user_expenses_updated_at ON user_expenses
+    `);
+    await pool.query(`
+      CREATE TRIGGER update_user_expenses_updated_at BEFORE UPDATE ON user_expenses
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()
+    `);
+    console.log('Trigger update_user_expenses_updated_at criado');
     
     console.log('Todas as tabelas do PostgreSQL criadas/verificadas com sucesso');
   } catch (error) {

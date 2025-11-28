@@ -9,6 +9,7 @@ import { pingRouter } from './Controller/pingController';
 import { userRouter } from './Controller/userController';
 import { authRouter } from './Controller/authController';
 import { transactionRouter } from './Controller/transactionController';
+import { expenseRouter } from './Controller/expenseController';
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use('/ping', pingRouter);
 app.use('/users', userRouter);
 app.use('/auth', authRouter);
 app.use('/transactions', transactionRouter);
+app.use('/expenses', expenseRouter);
 
 // Health check
 app.get('/health', (req, res) => {
